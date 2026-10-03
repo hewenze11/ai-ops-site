@@ -1,0 +1,30 @@
+# AI Ops 官网 + 会员后台，一键起。
+# 默认只监听 127.0.0.1:8090，避免裸暴露；要对外请加带 TLS 的反向代理。
+services:
+  site:
+    build:
+      context: .
+      target: runtime
+    image: ghcr.io/hewenze11/ai-ops-site:latest
+    restart: unless-stopped
+    ports:
+      - "${BIND:-127.0.0.1}:${PORT:-8090}:8090"
+    environment:
+      # 管理员令牌：优先从文件读取（推荐），容器内路径见下。
+      AI_OPS_SITE_ADMIN_TOKEN_FILE: /run/secrets/admin_token
+      AI_OPS_SITE_BRAND: ${BRAND:-AI Ops}
+      AI_OPS_SITE_GITHUB: ${GITHUB_URL:-https://github.com/hewenze11/ai-ops}
+      AI_OPS_SITE_PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-simulated}
+      AI_OPS_SITE_PLAN_PRICE_CENTS: ${PLAN_PRICE_CENTS:-2900}
+      # 生产用 https 时设为 1，让会话 cookie 带 Secure。
+      AI_OPS_SITE_COOKIE_SECURE: ${COOKIE_SECURE:-0}
+    volumes:
+      - ./state:/data
+      - ./secrets/admin_token:/run/secrets/admin_token:ro
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true

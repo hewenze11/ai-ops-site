@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Ops · AI 运维工作台</title>
+<meta name="description" content="开源的 AI 运维工作台：用 AI Agent 辅助运维，教学课程 + Skills 订阅库。" />
+<link rel="stylesheet" href="/styles.css" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛠️</text></svg>" />
+</head>
+<body>
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="/" data-link>
+      <span class="logo">◈</span><span id="brand-name">AI Ops</span>
+    </a>
+    <nav class="nav-links">
+      <a href="/" data-link>首页</a>
+      <a href="/courses" data-link>课程</a>
+      <a href="/skills" data-link>Skills 库</a>
+      <a href="/pricing" data-link>定价</a>
+      <a id="gh-link" class="gh" href="https://github.com/hewenze11/ai-ops" target="_blank" rel="noopener">GitHub ↗</a>
+    </nav>
+    <div class="nav-user" id="nav-user"></div>
+  </div>
+</header>
+
+<main id="app"></main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <div>
+      <div class="brand"><span class="logo">◈</span><span id="brand-name-f">AI Ops</span></div>
+      <p class="muted">开源的 AI 运维工作台。课程与 Skills 订阅由本官网提供。</p>
+    </div>
+    <div class="footer-cols">
+      <div>
+        <h4>产品</h4>
+        <a href="/courses" data-link>课程</a>
+        <a href="/skills" data-link>Skills 库</a>
+        <a href="/pricing" data-link>定价</a>
+      </div>
+      <div>
+        <h4>开源</h4>
+        <a id="gh-link-f" href="https://github.com/hewenze11/ai-ops" target="_blank" rel="noopener">主服务仓库 ↗</a>
+        <a href="https://github.com/hewenze11/ai-ops-agent" target="_blank" rel="noopener">执行端仓库 ↗</a>
+        <a href="https://github.com/hewenze11/ai-ops/blob/main/deploy/README.md" target="_blank" rel="noopener">部署文档 ↗</a>
+      </div>
+    </div>
+  </div>
+  <div class="wrap muted copyright">© <span id="year"></span> hewenze11 · 预览版本，接口与定价可能变动</div>
+</footer>
+
+<div id="toast" class="toast" hidden></div>
+<script src="/app.js"></script>
+</body>
+</html>
