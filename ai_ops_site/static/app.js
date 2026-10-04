@@ -61,27 +61,69 @@
   // ---- pages ----
   const pages = {
     home() {
-      const free = `<p class="muted">用 AI Agent 辅助日常运维：执行协议、最小权限、确认模式、记忆与编排，
-        全部开源可自托管。这里提供配套的<b>教学课程</b>与<b>Skills 订阅库</b>。</p>`;
+      const gh = esc(site.github_url);
+      const demoCmd = `curl -fsSL ${gh.replace('github.com', 'raw.githubusercontent.com')}/main/deploy/install-control.sh | sudo bash`;
+      const steps = [
+        ["1", "注册账号", `用邮箱注册，免费。不注册也能直接看开源代码与文档。`],
+        ["2", "装控制服务", "在服务器上跑一行命令，装好主服务（控制台 + 执行协议）。"],
+        ["3", "接入执行端", "每台被管机器装一个 Agent，用普通账号降权运行，命令逐条可确认。"],
+        ["4", "开箱即用", "订阅 Skills 库，把 Key 填进主服务，一键同步运维剧本到本地角色。"],
+      ];
+      const cards = [
+        ["🛡️", "最小权限执行", "Agent 以普通账号降权执行，逐条人工确认；未知结果阻塞角色，绝不静默放行。"],
+        ["🧠", "有记忆的运维搭子", "角色有长期记忆与上下文，越用越懂你的环境；默认只读，写操作走确认模式。"],
+        ["📦", "Skills 持续更新", "把一次次排障沉淀成剧本，订阅后主服务一键拉取；不锁定、不加密、可审计。"],
+        ["🔓", "开源可自托管", "主服务与执行端全部开源（AGPL-3.0），数据留在你自己的机器上。"],
+      ];
       return `
       <section class="hero"><div class="wrap">
+        <div class="hero-badge">AGPL-3.0 开源 · 可自托管 · 预览版</div>
         <h1>把 AI 变成你的运维搭子</h1>
-        <p class="sub">开源的 AI 运维工作台 + 系统化教学 + 持续更新的 Skills 库。
-          自托管、可审计、最小权限执行。</p>
+        <p class="sub">开源的 AI 运维工作台：Agent 在你自己的机器上以最小权限执行，配合系统化教学课程与持续更新的 Skills 库。
+          一个人，也能撑起一个团队的运维。</p>
         <div class="cta">
-          <a class="btn primary" href="/register" data-link>免费注册</a>
-          <a class="btn" href="/courses" data-link>浏览课程</a>
-          <a class="btn ghost" href="${esc(site.github_url)}" target="_blank" rel="noopener">看开源代码 ↗</a>
+          <a class="btn primary lg" href="/register" data-link>免费开始</a>
+          <a class="btn lg" href="/courses" data-link>浏览课程</a>
+          <a class="btn ghost lg" href="${gh}" target="_blank" rel="noopener">看开源代码 ↗</a>
+        </div>
+        <div class="cmd" title="点击复制">
+          <code id="cmdline">${esc(demoCmd)}</code>
+          <button class="btn sm ghost" id="copy-cmd">复制</button>
+        </div>
+        <p class="muted sm">一行命令装好控制服务；执行端与部署细节见
+          <a href="${gh}/blob/main/deploy/README.md" target="_blank" rel="noopener" style="color:var(--accent)">部署文档 ↗</a></p>
+      </div></section>
+
+      <section class="section"><div class="wrap">
+        <h2 class="center">5 分钟上手</h2>
+        <p class="muted center">从注册到让 AI 帮你干活，四步。</p>
+        <div class="grid cols-4 mt-lg">
+          ${steps.map(([n, t, d]) => `<div class="card step"><div class="step-num">${n}</div><h3>${t}</h3><p class="muted">${d}</p></div>`).join("")}
         </div>
       </div></section>
-      <section class="section tight"><div class="wrap">${free}</div></section>
-      <section class="section"><div class="wrap">
-        <div class="grid cols-3">
-          ${[
-            ["自托管控制服务", "FastAPI + SQLite，任务、角色、资产、审计全部本地可控。"],
-            ["最小权限执行", "Agent 以普通账号降权执行，逐条人工确认，未知执行必人工处置。"],
-            ["教学 + Skills", "课程讲清做法，Skills 库持续更新，主服务一键拉取。"],
-          ].map(([t, d]) => `<div class="card"><h3>${t}</h3><p class="muted">${d}</p></div>`).join("")}
+
+      <section class="section tight"><div class="wrap">
+        <div class="grid cols-4">
+          ${cards.map(([i, t, d]) => `<div class="card"><div class="card-icon">${i}</div><h3>${t}</h3><p class="muted">${d}</p></div>`).join("")}
+        </div>
+      </div></section>
+
+      <section class="section"><div class="wrap center">
+        <h2>两种买法，按需选择</h2>
+        <p class="muted">课程教你方法，Skills 库让你少写重复剧本。</p>
+        <div class="grid cols-2 mt-lg" style="text-align:left">
+          <div class="card">
+            <h3>教学课程</h3>
+            <div class="price">${yuan(9900)}<small> 起</small></div>
+            <p class="muted">系统讲解如何用 AI Agent 做运维，购买后永久观看。</p>
+            <a class="btn" href="/courses" data-link>浏览课程</a>
+          </div>
+          <div class="card hl">
+            <h3>Skills 会员 <span class="badge">推荐</span></h3>
+            <div class="price">${yuan(site.plan.price_cents)}<small>/月</small></div>
+            <p class="muted">全库 Skills 拉取权限，动态 Key，可多机、可吊销，到期自动失效。</p>
+            <a class="btn primary" href="/skills" data-link>了解 Skills 库</a>
+          </div>
         </div>
       </div></section>`;
     },
@@ -268,8 +310,13 @@
           ${ent.subscribed ? `<div id="newkey-out" class="mt"></div>` : '<p class="muted">订阅 Skills 会员后可生成拉取 Key。</p>'}
           <div class="mt">${keyRows || '<p class="muted">还没有 Key。</p>'}</div>
           <p class="muted mt" style="font-size:14px">
-            在主服务里配置：Skills 库地址 <code>${location.origin}/api/v1/skills/repo</code>，凭证填你的 Key。
-            主服务会带上 <code>Authorization: Bearer &lt;key&gt;</code> 来拉取。
+            在你的主服务里拉取：
+          </p>
+          <div class="cmd"><code>python scripts/skills_sync.py --hub ${location.origin}/api/v1/skills/repo --pull-key-file /etc/ai-ops/skills.key --role ops</code></div>
+          <p class="muted" style="font-size:14px">
+            把上面的 Key 存到主服务机器（例如 <code>/etc/ai-ops/skills.key</code>，权限 600），
+            脚本会带 <code>Authorization: Bearer &lt;key&gt;</code> 拉取并导入本地角色。也可用控制台接口
+            <code>POST /api/v1/skills/sync</code>。详见主服务仓库 <code>docs/skills-sync.md</code>。
           </p>
         </div>
       </div></section>`;
@@ -318,6 +365,19 @@
 
   // ---- event wiring per page ----
   function bindEvents(path) {
+    const copyBtn = document.getElementById("copy-cmd");
+    if (copyBtn) copyBtn.addEventListener("click", async () => {
+      const text = document.getElementById("cmdline").textContent;
+      try {
+        await navigator.clipboard.writeText(text);
+        toast("命令已复制");
+      } catch (_) {
+        // Clipboard can be blocked (insecure context); select instead.
+        const r = document.createRange(); r.selectNodeContents(document.getElementById("cmdline"));
+        const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+        toast("请手动复制选中内容");
+      }
+    });
     const buy = (el) => el.addEventListener("click", async () => {
       try {
         const o = await api("/orders", { method: "POST", body: JSON.stringify({ kind: "course", ref: el.dataset.buy }) });
