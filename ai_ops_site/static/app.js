@@ -90,7 +90,8 @@
           <code id="cmdline">${esc(demoCmd)}</code>
           <button class="btn sm ghost" id="copy-cmd">复制</button>
         </div>
-        <p class="muted sm">一行命令装好控制服务；执行端与部署细节见
+        <p class="muted sm">一行命令装好控制服务（Linux + Docker）。镜像取自 GHCR，若尚未公开需先
+          <code>docker login ghcr.io</code>；脚本会在拉取失败时给出提示。详见
           <a href="${gh}/blob/main/deploy/README.md" target="_blank" rel="noopener" style="color:var(--accent)">部署文档 ↗</a></p>
       </div></section>
 
