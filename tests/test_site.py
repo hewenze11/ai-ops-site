@@ -44,6 +44,12 @@ def test_free_course_is_unlocked_after_claim(tmp_path):
 def test_paid_course_locks_video_url_until_purchased(tmp_path):
     c = make_client(tmp_path)
     register(c)
+    # Give the paid course a real video URL via the admin surface, so this test
+    # checks the lock/unlock mechanism itself rather than whatever the seed ships.
+    h = {"Authorization": "Bearer test-admin-token-not-real"}
+    c.put("/api/v1/admin/videos/basics-1", headers=h, json={
+        "id": "basics-1", "course_id": "ops-basics", "title": "第 1 讲",
+        "url": "https://cdn.example/lesson-1.mp4", "duration_s": 100})
     cat = c.get("/api/v1/catalog").json()
     basics = next(x for x in cat["courses"] if x["id"] == "ops-basics")
     assert basics["owned"] is False
@@ -55,7 +61,10 @@ def test_paid_course_locks_video_url_until_purchased(tmp_path):
     cat2 = c.get("/api/v1/catalog").json()
     basics2 = next(x for x in cat2["courses"] if x["id"] == "ops-basics")
     assert basics2["owned"] is True
-    assert all(not v.get("locked") and v["url"] for v in basics2["videos"])
+    # Nothing is locked once owned, and the configured video now carries its url.
+    assert all(not v.get("locked") for v in basics2["videos"])
+    lesson = next(v for v in basics2["videos"] if v["id"] == "basics-1")
+    assert lesson["url"] == "https://cdn.example/lesson-1.mp4"
 
 
 def test_login_and_session(tmp_path):

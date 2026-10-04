@@ -7,6 +7,7 @@
                plan: { id: "skills-monthly", price_cents: 2900, days: 30 },
                simulated_payments: true };
   let me = null;
+  let currentVideos = {};  // videoId -> video, for the open course page
 
   // ---- api ----
   async function api(path, opts = {}) {
@@ -28,6 +29,37 @@
 
   function yuan(cents) { return "¥" + (cents / 100).toFixed(cents % 100 ? 2 : 0); }
   function esc(s) { return String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+  // Decide how to play a lesson from its URL, so the same catalog works whether
+  // videos are self-hosted (mp4/HLS) or embedded from a platform (player page).
+  // Keeping this in one place means switching providers is a data change, not a
+  // frontend rewrite.
+  function videoSourceKind(url) {
+    const u = String(url || "").trim();
+    if (!u) return "missing";
+    if (/\.m3u8(\?|#|$)/i.test(u)) return "hls";
+    if (/\.(mp4|webm|ogg|ogv|mov|m4v)(\?|#|$)/i.test(u)) return "file";
+    return "embed";
+  }
+  function videoEmbed(v) {
+    const kind = videoSourceKind(v.url);
+    const title = esc(v.title || "");
+    if (kind === "missing") {
+      return `<div class="player-ph"><div><h3>${title}</h3>
+        <p class="muted">此课节尚未配置视频地址。管理员可在后台填入自托管直链（mp4/HLS）
+        或平台播放页地址（B 站 / 腾讯云点播等），保存后这里会自动渲染播放器。</p></div></div>`;
+    }
+    if (kind === "embed") {
+      return `<div class="player-frame"><iframe src="${esc(v.url)}" title="${title}" allowfullscreen
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"></iframe></div>
+        <div class="player-cap muted">正在播放：${title}</div>`;
+    }
+    // Direct file or HLS. Browsers play mp4/webm natively; HLS only where supported
+    // (Safari/iOS, or Chrome with the page served over https and a native player).
+    return `<video class="player-video" controls preload="metadata" playsinline src="${esc(v.url)}">
+      你的浏览器不支持内联视频播放。<a href="${esc(v.url)}" target="_blank" rel="noopener">下载观看</a></video>
+      <div class="player-cap muted">正在播放：${title}</div>`;
+  }
   function toast(msg, kind = "ok") {
     const el = document.getElementById("toast");
     el.textContent = msg; el.className = "toast " + kind; el.hidden = false;
@@ -150,7 +182,7 @@
           </div>
         </div>`).join("");
       return `<section class="section"><div class="wrap">
-        <h1>课程</h1><p class="muted">系统讲解如何用 AI Agent 做运维。购买后即可在线观看（占位播放器，接入真实视频后替换）。</p>
+        <h1>课程</h1><p class="muted">系统讲解如何用 AI Agent 做运维。购买后即可在线观看。课程支持自托管直链（mp4/HLS）或平台播放页嵌入（B 站 / 腾讯云点播等）。</p>
         ${simNotice()}
         <div class="grid cols-3 mt-lg">${cards || '<p class="muted">暂无课程</p>'}</div>
       </div></section>`;
@@ -160,20 +192,28 @@
       const cat = await api("/catalog");
       const c = cat.courses.find(x => x.id === id);
       if (!c) return `<section class="section"><div class="wrap"><h1>课程不存在</h1><a href="/courses" data-link class="btn mt">返回课程</a></div></section>`;
+      currentVideos = {};
+      c.videos.forEach(v => { currentVideos[v.id] = v; });
+      const available = c.videos.filter(v => !v.locked);
       const rows = c.videos.map(v => `
-        <div class="vrow">
+        <div class="vrow" ${v.locked ? '' : `data-play="${esc(v.id)}" style="cursor:pointer"`}>
           <div>
             <div>${v.locked ? "🔒 " : '<span class="play">▶</span> '}${esc(v.title)}</div>
             <div class="meta muted">${Math.round(v.duration_s / 60)} 分钟${v.locked ? " · 购买后解锁" : ""}</div>
           </div>
           ${v.locked ? "" : `<span class="badge live">可看</span>`}
         </div>`).join("");
+      const first = available[0];
+      const player = first
+        ? `<div id="player" class="card mt-lg">${videoEmbed(first)}</div>`
+        : "";
       return `<section class="section"><div class="wrap">
         <a href="/courses" data-link class="muted">← 全部课程</a>
         <h1 class="mt">${esc(c.title)}</h1>
         <p class="muted">${esc(c.summary)}</p>
         ${c.owned ? "" : simNotice()}
         ${c.owned ? "" : `<div class="mt"><button class="btn primary" data-buy="${c.id}">购买后解锁全部 ${c.videos.length} 节（${yuan(c.price_cents)}）</button></div>`}
+        ${player}
         <div class="card mt-lg">${rows}</div>
       </div></section>`;
     },
@@ -387,6 +427,11 @@
         render();
       } catch (e) { toast(e.message, "err"); }
     });
+    document.querySelectorAll("[data-play]").forEach(el => el.addEventListener("click", () => {
+      const v = currentVideos[el.dataset.play];
+      const player = document.getElementById("player");
+      if (v && player) { player.innerHTML = videoEmbed(v); player.scrollIntoView({ behavior: "smooth", block: "center" }); }
+    }));
     document.querySelectorAll("[data-buy]").forEach(buy);
     document.querySelectorAll("[data-free]").forEach(el => el.addEventListener("click", async () => {
       try {

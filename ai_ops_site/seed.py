@@ -24,15 +24,15 @@ COURSES = [
 
 VIDEOS = [
     {"id": "intro-1", "course_id": "ops-free-intro", "title": "为什么要自己搭一套 AI 运维",
-     "url": "https://example.com/videos/intro-1.mp4", "duration_s": 1200, "sort": 10},
+     "url": "", "duration_s": 1200, "sort": 10},
     {"id": "basics-1", "course_id": "ops-basics", "title": "第 1 讲：执行协议与租约",
-     "url": "https://example.com/videos/basics-1.mp4", "duration_s": 1500, "sort": 10},
+     "url": "", "duration_s": 1500, "sort": 10},
     {"id": "basics-2", "course_id": "ops-basics", "title": "第 2 讲：最小权限与确认模式",
-     "url": "https://example.com/videos/basics-2.mp4", "duration_s": 1800, "sort": 20},
+     "url": "", "duration_s": 1800, "sort": 20},
     {"id": "adv-1", "course_id": "ops-advanced", "title": "第 1 讲：角色与串行队列",
-     "url": "https://example.com/videos/adv-1.mp4", "duration_s": 2100, "sort": 10},
+     "url": "", "duration_s": 2100, "sort": 10},
     {"id": "adv-2", "course_id": "ops-advanced", "title": "第 2 讲：记忆与编排",
-     "url": "https://example.com/videos/adv-2.mp4", "duration_s": 2400, "sort": 20},
+     "url": "", "duration_s": 2400, "sort": 20},
 ]
 
 # Skill content is plain text (reference material injected into a role), exactly
