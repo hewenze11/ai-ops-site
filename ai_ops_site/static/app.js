@@ -310,21 +310,50 @@
 
     async account() {
       if (!me) return pages.login();
-      const [ent, keys] = await Promise.all([api("/me/entitlements"), api("/me/pull-keys")]);
-      const courses = ent.entitlements.filter(e => e.kind === "course").map(e =>
-        `<div class="vrow"><div>📚 ${esc(e.ref)}</div><span class="badge live">已拥有</span></div>`).join("");
+      const [ent, keys, cat, orders] = await Promise.all([
+        api("/me/entitlements"), api("/me/pull-keys"), api("/catalog"), api("/orders")]);
+      const courseById = {};
+      (cat.courses || []).forEach(c => { courseById[c.id] = c; });
+
+      const courses = ent.entitlements.filter(e => e.kind === "course").map(e => {
+        const c = courseById[e.ref];
+        const title = c ? c.title : e.ref;
+        const lessons = c ? c.videos.filter(v => !v.locked).length : 0;
+        return `<div class="vrow">
+          <div>
+            <div>📚 ${esc(title)}</div>
+            <div class="meta muted">${lessons ? lessons + " 节可看" : ""}</div>
+          </div>
+          <a class="btn sm primary" href="/courses/${encodeURIComponent(e.ref)}" data-link>开始学习</a>
+        </div>`;
+      }).join("");
+
+      const subEnt = ent.entitlements.find(e => e.kind === "subscription");
       const sub = ent.subscribed
-        ? `<span class="badge live">有效</span> <span class="muted">到期：${new Date((ent.entitlements.find(e => e.kind === "subscription").expires_at) * 1000).toLocaleDateString()}</span>`
+        ? `<span class="badge live">有效</span> <span class="muted">到期：${subEnt && subEnt.expires_at ? new Date(subEnt.expires_at * 1000).toLocaleDateString() : "—"}</span>`
         : `<span class="badge">未订阅</span>`;
-      const keyRows = keys.map(k => `
+
+      const keyRows = keys.filter(k => !k.revoked_at).map(k => `
         <div class="vrow">
           <div>
-            <div>${esc(k.label || "拉取 Key #" + k.id)} ${k.revoked_at ? '<span class="badge">已吊销</span>' : '<span class="badge live">有效</span>'}</div>
+            <div>${esc(k.label || "拉取 Key #" + k.id)} <span class="badge live">有效</span></div>
             <div class="meta muted">创建：${new Date(k.created_at * 1000).toLocaleString()}
               ${k.last_used_at ? " · 最近使用：" + new Date(k.last_used_at * 1000).toLocaleString() : ""}</div>
           </div>
-          ${k.revoked_at ? "" : `<button class="btn sm danger" data-revoke="${k.id}">吊销</button>`}
+          <button class="btn sm danger" data-revoke="${k.id}">吊销</button>
         </div>`).join("");
+
+      const stateText = { created: "待支付", paid: "已支付", cancelled: "已取消" };
+      const kindText = { course: "课程", subscription: "会员" };
+      const orderRows = (orders || []).map(o => `
+        <div class="vrow">
+          <div>
+            <div>${kindText[o.kind] || o.kind} · ${esc(courseById[o.ref] ? courseById[o.ref].title : o.ref)}</div>
+            <div class="meta muted">${new Date(o.created_at * 1000).toLocaleString()} · ¥${(o.amount_cents / 100).toFixed(2)}</div>
+          </div>
+          <span class="badge ${o.state === "paid" ? "live" : ""}">${stateText[o.state] || o.state}</span>
+        </div>`).join("");
+
       return `<section class="section"><div class="wrap">
         <h1>我的账号</h1>
         <p class="muted">${esc(me.email)} · ${esc(me.display_name)}</p>
@@ -337,7 +366,7 @@
           <div class="card">
             <h3>Skills 会员</h3>
             <p>状态：${sub}</p>
-            ${ent.subscribed ? "" : `<button class="btn primary" data-subscribe>订阅 Skills 库</button>`}
+            ${ent.subscribed ? '<p class="muted" style="font-size:14px">在下方管理拉取 Key，到你的主服务控制台一键同步。</p>' : `<button class="btn primary" data-subscribe>订阅 Skills 库</button>`}
           </div>
         </div>
         <div class="card mt-lg">
@@ -350,15 +379,16 @@
           </div>
           ${ent.subscribed ? `<div id="newkey-out" class="mt"></div>` : '<p class="muted">订阅 Skills 会员后可生成拉取 Key。</p>'}
           <div class="mt">${keyRows || '<p class="muted">还没有 Key。</p>'}</div>
-          <p class="muted mt" style="font-size:14px">
-            在你的主服务里拉取：
-          </p>
+          <p class="muted mt" style="font-size:14px">在你的主服务里拉取（控制台点一下，或用命令行）：</p>
           <div class="cmd"><code>python scripts/skills_sync.py --hub ${location.origin}/api/v1/skills/repo --pull-key-file /etc/ai-ops/skills.key --role ops</code></div>
           <p class="muted" style="font-size:14px">
-            把上面的 Key 存到主服务机器（例如 <code>/etc/ai-ops/skills.key</code>，权限 600），
-            脚本会带 <code>Authorization: Bearer &lt;key&gt;</code> 拉取并导入本地角色。也可用控制台接口
-            <code>POST /api/v1/skills/sync</code>。详见主服务仓库 <code>docs/skills-sync.md</code>。
+            也可登录主服务控制台 →「Skills」页签 →「从官网 Skills 库同步」，填官网地址与本 Key 即可。
+            详见主服务仓库 <code>docs/skills-sync.md</code>。
           </p>
+        </div>
+        <div class="card mt-lg">
+          <h3>我的订单</h3>
+          ${orderRows || '<p class="muted">还没有订单。</p>'}
         </div>
       </div></section>`;
     },
